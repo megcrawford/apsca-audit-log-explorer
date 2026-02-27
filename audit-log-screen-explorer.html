@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explore Your Audit Log Screen — APSCA</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+    background: #f7f6f3;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+
+  .page-header {
+    background: #1a2a3a;
+    color: #fff;
+    padding: 32px 40px 28px;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.3px;
+  }
+
+  .page-header p {
+    font-size: 14px;
+    color: #a0b4c8;
+    line-height: 1.5;
+    max-width: 640px;
+  }
+
+  .content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 40px 60px;
+  }
+
+  .instruction-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #e8f4f0;
+    border: 1px solid #b8ddd1;
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin-bottom: 28px;
+    font-size: 13.5px;
+    color: #1a5c47;
+    font-weight: 500;
+  }
+
+  .instruction-bar svg {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  /* === INTERACTIVE IMAGE CONTAINER === */
+  .screen-container {
+    position: relative;
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+    border: 1px solid #d8d5d0;
+  }
+
+  .screen-container img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* === HOTSPOT BASE === */
+  .hotspot {
+    position: absolute;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 2;
+  }
+
+  .hotspot::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -10px;
+    left: 8px;
+    background: #1a2a3a;
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .hotspot:hover {
+    border-color: #2a9d9e;
+    background: rgba(42, 157, 158, 0.08);
+    z-index: 50;
+  }
+
+  .hotspot:hover::before {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* === TOOLTIP === */
+  .hotspot .tooltip {
+    position: absolute;
+    background: #1a2a3a;
+    color: #e8e6e1;
+    font-size: 13px;
+    line-height: 1.55;
+    padding: 14px 18px;
+    border-radius: 8px;
+    width: 320px;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+    transform: translateY(6px);
+    z-index: 100;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  }
+
+  .hotspot .tooltip strong {
+    display: block;
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: -0.1px;
+  }
+
+  .hotspot .tooltip .tip-highlight {
+    display: inline-block;
+    background: rgba(42, 157, 158, 0.25);
+    color: #7dd4d5;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-top: 8px;
+  }
+
+  .hotspot:hover .tooltip {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  /* Tooltip positioning classes */
+  .tooltip-below { top: calc(100% + 10px); left: 0; }
+  .tooltip-below-right { top: calc(100% + 10px); right: 0; left: auto; }
+  .tooltip-above { bottom: calc(100% + 10px); left: 0; }
+  .tooltip-above-right { bottom: calc(100% + 10px); right: 0; left: auto; }
+  .tooltip-right { top: 0; left: calc(100% + 10px); }
+  .tooltip-left { top: 0; right: calc(100% + 10px); left: auto; }
+
+  /* === PULSING DOT INDICATOR === */
+  .hotspot .pulse-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    background: #2a9d9e;
+    border-radius: 50%;
+    z-index: 5;
+  }
+
+  .hotspot .pulse-dot::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    width: 16px;
+    height: 16px;
+    background: rgba(42, 157, 158, 0.3);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(0.8); opacity: 0.6; }
+    50% { transform: scale(1.2); opacity: 0; }
+  }
+
+  .hotspot:hover .pulse-dot {
+    display: none;
+  }
+
+  /* === LEGEND === */
+  .legend {
+    margin-top: 24px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: 12.5px;
+    color: #6b6560;
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #2a9d9e;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 768px) {
+    .page-header { padding: 24px 20px; }
+    .content { padding: 20px; }
+    .hotspot .tooltip { width: 260px; font-size: 12px; }
+    .instruction-bar { font-size: 12.5px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Explore Your Audit Log Screen</h1>
+  <p>Hover over any highlighted area to learn more.</p>
+</div>
+
+<div class="content">
+
+  <div class="instruction-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    Hover over the pulsing dots to learn about each section of the screen.
+  </div>
+
+  <div class="screen-container">
+    <img src="audit-log-screen.png" alt="APSCA Audit Log Screen">
+
+    <!-- 1. AUDIT LOG SUMMARY HEADING -->
+    <div class="hotspot" data-label="SECTION HEADING"
+         style="top: 0%; left: 0%; width: 22%; height: 4.5%;">
+      <span class="pulse-dot"></span>
+      <div class="tooltip tooltip-below">
+        <strong>Audit Log Summary</strong>
+        The top section of your screen provides an at-a-glance overview of your entire audit log — including your portfolio status, progress toward the 20-day requirement, and key action buttons.
+      </div>
+    </div>
+
+    <!-- 2. PORTFOLIO STATUS BADGE -->
+    <div class="hotspot" data-label="PORTFOLIO STATUS"
+         style="top: 6.5%; left: 0.5%; width: 8%; height: 5.5%;">
+      <span class="pulse-dot"></span>
+      <div class="tooltip tooltip-below">
+        <strong>Portfolio Status</strong>
+        This badge shows the overall status of your audit log. It moves through stages as you progress: <em>In Progress</em> → <em>Pending Firm Approval</em> or <em>Pending Admin Review</em> → <em>Pending External Approval</em> → <em>Approved</em>.
+      </div>
+    </div>
+
+    <!-- 4. PROGRESS BAR - TEAL SECTION -->
+    <div class="hotspot" data-label="APPROVED DAYS"
+         style="top: 28.5%; left: 1.5%; width: 46%; height: 8%;">
+      <span class="pulse-dot"></span>
+      <div class="tooltip tooltip-below">
+        <strong>Approved Days (Teal)</strong>
+        The teal portion of the bar represents audit days that have been <strong>approved</strong> by APSCA and confirmed toward your 20-day target. The percentage shown (e.g. 50%) reflects your confirmed progress.
+        <span class="tip-highlight">Hover over the bar for a detailed breakdown</span>
+      </div>
+    </div>
+
+    <!-- 5. PROGRESS BAR - GOLD SECTION -->
+    <div class="hotspot" data-label="PENDING DAYS"
+         style="top: 28.5%; left: 47.5%; width: 12%; height: 8%;">
+      <span class="pulse-dot"></span>
+      <div class="tooltip tooltip-below">
+        <strong>Pending Review Days (Gold)</strong>
+        The gold portion represents days from audits that are still <strong>pending review</strong> by APSCA. The "+%" figure shows how much these would add to your progress if approved. These are not yet confirmed toward your target.
+      </div>
+    </div>
+
+    <!-- 6. PROGRESS BAR - GREY/REMAINING -->
+    <div class="hotspot" data-label="REMAINING"
+         style="top: 28.5%; left: 59.5%; width: 39%; height: 8%;">
+      <span class="pulse-dot"></span>
+      <div class="tooltip tooltip-below-right">
+        <strong>Remaining Days (Grey)</strong>
+        The grey area represents the days still needed to reach the 20-day target. As you add more audits and they are approved, this section will shrink.
+      </div>
+    </div>
+
+    <!-- 7. ADD AUDIT LOG BUTTON -->
+    <div class="hotspot" data-label="ADD AUDIT"
+         style="top: 46%; left: 0.5%; width: 8%; height: 5.5%;">
+      <span class="pulse-dot"></span>
+      <div class="tooltip tooltip-below">
+        <strong>Add Audit Log</strong>
+        Click this button to record a new audit in your log. You'll be guided through selecting the program type, entering audit details, and submitting for APSCA review.
+      </div>
+    </div>
+
+    <!-- 8. SUBMIT FOR VERIFICATION BUTTON -->
+    <div class="hotspot" data-label="SUBMIT FOR VERIFICATION"
+         style="top: 46%; left: 9%; width: 14%; height: 5.5%;">
+      <span class="pulse-dot"></span>
+      <div class="tooltip tooltip-below">
+        <strong>Submit For Verification</strong>
+        Once you reach 20 approved days, this button becomes active. Click it to submit your entire audit log to your firm for verification — or to nominate an external approver if you are not currently linked to a firm.
+        <span class="tip-highlight">Requires 20 approved days</span>
+      </div>
+    </div>
+
+    <!-- 9. AUDIT LOG ACTIVITIES HEADING -->
+    <div class="hotspot" data-label="ACTIVITIES TABLE"
+         style="top: 54%; left: 0%; width: 20%; height: 5%;">
+      <span class="pulse-dot"></span>
+      <div class="tooltip tooltip-below">
+        <strong>Audit Log Activities</strong>
+        This table lists every individual audit you've added to your log. Each row is one audit entry, showing its details, status, and verification progress.
+      </div>
+    </div>
+
+    <!-- 10. DELETE COLUMN -->
+    <div class="hotspot" data-label="DELETE"
+         style="top: 69%; left: 0%; width: 4.5%; height: 26%;">
+      <span class="pulse-dot"></span>
+      <div class="tooltip tooltip-above">
+        <strong>Delete</strong>
+        Click to remove an audit entry from your log. You may want to delete an entry if it was submitted with incorrect details, as entries cannot be edited after submission.
+      </div>
+    </div>
+
+    <!-- 11. DETAILS COLUMN -->
+    <div class="hotspot" data-label="DETAILS"
+         style="top: 69%; left: 4.5%; width: 5.5%; height: 26%;">
+      <span class="pulse-dot"></span>
+      <div class="tooltip tooltip-above">
+        <strong>Details</strong>
+        Click "View" to open the full details of an audit entry, including the program, standard, dates, and any other information you submitted.
+      </div>
+    </div>
+
+    <!-- 12. STATUS COLUMN -->
+    <div class="hotspot" data-label="STATUS"
+         style="top: 69%; left: 73%; width: 10.5%; height: 26%;">
+      <span class="pulse-dot"></span>
+      <div class="tooltip tooltip-above-right">
+        <strong>Status</strong>
+        Shows whether APSCA has accepted each audit toward your log. Possible values are:<br><br>
+        <span style="background:#e74c3c;color:#fff;padding:1px 6px;border-radius:3px;font-size:11px;">Rejected</span> — Does not meet the requirements<br>
+        <span style="background:#27ae60;color:#fff;padding:1px 6px;border-radius:3px;font-size:11px;">Approved</span> — Accepted toward your log<br>
+        <span style="background:#f5f5f5;color:#555;padding:1px 6px;border-radius:3px;font-size:11px;border:1px solid #ccc;">Pending Review</span> — Awaiting APSCA review
+      </div>
+    </div>
+
+    <!-- 13. FIRM VERIFICATION STATUS COLUMN -->
+    <div class="hotspot" data-label="FIRM VERIFICATION"
+         style="top: 69%; left: 83.5%; width: 16.5%; height: 26%;">
+      <span class="pulse-dot"></span>
+      <div class="tooltip tooltip-above-right">
+        <strong>Firm Verification Status</strong>
+        Shows whether your firm or external approver has verified each audit:<br><br>
+        <span style="background:#f8d7da;color:#721c24;padding:1px 6px;border-radius:3px;font-size:11px;">Needs Verification</span> — Not yet submitted for verification<br>
+        <span style="background:#fff3cd;color:#856404;padding:1px 6px;border-radius:3px;font-size:11px;">Awaiting Verification</span> — Submitted, waiting on reviewer<br>
+        <span style="background:#d4edda;color:#155724;padding:1px 6px;border-radius:3px;font-size:11px;">Verified</span> — Confirmed by your firm/approver<br>
+        <span style="background:#f5f5f5;color:#555;padding:1px 6px;border-radius:3px;font-size:11px;border:1px solid #ccc;">Unable to Verify</span> — Could not be confirmed
+      </div>
+    </div>
+
+  </div><!-- /screen-container -->
+
+  <div class="legend">
+    <span><span class="legend-dot"></span> Hover over pulsing dots for details</span>
+    <span style="color:#aaa;">|</span>
+    <span>11 interactive areas to explore</span>
+  </div>
+
+</div><!-- /content -->
+
+</body>
+</html>
